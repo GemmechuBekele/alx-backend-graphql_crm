@@ -2,10 +2,12 @@
 import re
 import graphene
 from graphene_django import DjangoObjectType
+from graphene_django.filter import DjangoFilterConnectionField
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from decimal import Decimal
 from .models import Customer, Product, Order
+from .filters import CustomerFilter, ProductFilter, OrderFilter
 
 # ---------------- GraphQL Types ----------------
 class CustomerType(DjangoObjectType):
@@ -151,3 +153,41 @@ class Mutation(graphene.ObjectType):
     bulk_create_customers = BulkCreateCustomers.Field()
     create_product = CreateProduct.Field()
     create_order = CreateOrder.Field()
+
+class CustomerNode(DjangoObjectType):
+    class Meta:
+        model = Customer
+        filterset_class = CustomerFilter
+        interfaces = (graphene.relay.Node,)
+
+class ProductNode(DjangoObjectType):
+    class Meta:
+        model = Product
+        filterset_class = ProductFilter
+        interfaces = (graphene.relay.Node,)
+
+class OrderNode(DjangoObjectType):
+    class Meta:
+        model = Order
+        filterset_class = OrderFilter
+        interfaces = (graphene.relay.Node,)
+
+class Query(graphene.ObjectType):
+    all_customers = DjangoFilterConnectionField(CustomerNode, order_by=graphene.List(of_type=graphene.String))
+    all_products = DjangoFilterConnectionField(ProductNode, order_by=graphene.List(of_type=graphene.String))
+    all_orders = DjangoFilterConnectionField(OrderNode, order_by=graphene.List(of_type=graphene.String))
+
+    def resolve_all_customers(self, info, **kwargs):
+        order_by = kwargs.get("order_by")
+        qs = Customer.objects.all()
+        return qs.order_by(*order_by) if order_by else qs
+
+    def resolve_all_products(self, info, **kwargs):
+        order_by = kwargs.get("order_by")
+        qs = Product.objects.all()
+        return qs.order_by(*order_by) if order_by else qs
+
+    def resolve_all_orders(self, info, **kwargs):
+        order_by = kwargs.get("order_by")
+        qs = Order.objects.all()
+        return qs.order_by(*order_by) if order_by else qs
