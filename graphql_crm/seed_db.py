@@ -1,19 +1,46 @@
 # seed_db.py
 import os
+import os
 import django
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "graphql_crm.settings")
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'graphql_crm.settings')
 django.setup()
 
-from crm.models import Customer, Product
+from crm.models import Customer, Product, Order
 
-Customer.objects.all().delete()
-Product.objects.all().delete()
+def seed_data():
+    # Clear existing data
+    Order.objects.all().delete()
+    Customer.objects.all().delete()
+    Product.objects.all().delete()
 
-Customer.objects.create(name="John", email="john@example.com", phone="+1234567890")
-Customer.objects.create(name="Jane", email="jane@example.com")
+    # Create customers
+    customers = [
+        Customer(name="Alice", email="alice@example.com", phone="+1234567890"),
+        Customer(name="Bob", email="bob@example.com", phone="123-456-7890"),
+        Customer(name="Carol", email="carol@example.com")
+    ]
+    Customer.objects.bulk_create(customers)
 
-Product.objects.create(name="Phone", price=199.99, stock=25)
-Product.objects.create(name="Tablet", price=299.99, stock=15)
+    # Create products
+    products = [
+        Product(name="Laptop", price=999.99, stock=10),
+        Product(name="Mouse", price=19.99, stock=50),
+        Product(name="Keyboard", price=49.99, stock=30)
+    ]
+    Product.objects.bulk_create(products)
 
-print("Database seeded!")
+    # Create orders
+    alice = Customer.objects.get(email="alice@example.com")
+    laptop = Product.objects.get(name="Laptop")
+    mouse = Product.objects.get(name="Mouse")
+
+    order = Order(customer=alice)
+    order.save()
+    order.products.set([laptop, mouse])
+    order.save()
+
+    print("Database seeded successfully!")
+
+if __name__ == "__main__":
+    seed_data()
