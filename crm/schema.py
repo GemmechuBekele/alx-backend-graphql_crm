@@ -201,15 +201,17 @@ class UpdateLowStockProducts(graphene.Mutation):
     updated_products = graphene.List(ProductType)
     message = graphene.String()
 
-    def mutate(self, info):
+    @classmethod
+    def mutate(cls, root, info):
         low_stock_products = Product.objects.filter(stock__lt=10)
         for product in low_stock_products:
             product.stock += 10
             product.save()
+
         return UpdateLowStockProducts(
             updated_products=low_stock_products,
             message=f"Restocked {low_stock_products.count()} products."
         )
 
 class Mutation(graphene.ObjectType):
-    update_low_stock_products = UpdateLowStockProducts.Field()
+    updateLowStockProducts = UpdateLowStockProducts.Field()

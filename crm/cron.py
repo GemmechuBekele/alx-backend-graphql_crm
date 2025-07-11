@@ -29,7 +29,7 @@ def log_crm_heartbeat():
     with open("/tmp/crm_heartbeat_log.txt", "a") as f:
         f.write(message + "\n")
 
-def update_low_stock():
+def updatelowstock():
     transport = RequestsHTTPTransport(url="http://localhost:8000/graphql", verify=False)
     client = Client(transport=transport, fetch_schema_from_transport=False)
 
@@ -52,12 +52,12 @@ def update_low_stock():
         message = response["updateLowStockProducts"]["message"]
         now = datetime.datetime.now().strftime("%d/%m/%Y-%H:%M:%S")
 
-        with open("/tmp/low_stock_updates_log.txt", "a") as f:
+        with open("/tmp/lowstockupdates_log.txt", "a") as f:
             f.write(f"{now} - {message}\n")
             for p in products:
                 f.write(f"Product: {p['name']} (ID: {p['id']}), New Stock: {p['stock']}\n")
 
     except Exception as e:
         now = datetime.datetime.now().strftime("%d/%m/%Y-%H:%M:%S")
-        with open("/tmp/low_stock_updates_log.txt", "a") as f:
-            f.write(f"{now} - ERROR running update_low_stock: {e}\n")
+        with open("/tmp/lowstockupdates_log.txt", "a") as f:
+            f.write(f"{now} - ERROR running updatelowstock: {e}\n")
