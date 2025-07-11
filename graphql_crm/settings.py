@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'graphene_django',
     'crm',
     'django_filters',
+    'django_crontab',
 ]
 
 MIDDLEWARE = [
@@ -128,3 +129,6 @@ GRAPHENE = {
     "SCHEMA": "graphql_crm.schema.schema"
 }
 
+CRONJOBS = [
+    ('*/5 * * * *', 'crm.cron.log_crm_heartbeat'),
+]
