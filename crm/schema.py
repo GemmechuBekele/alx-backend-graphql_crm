@@ -1,4 +1,3 @@
-# crm/schema.py
 import re
 import graphene
 from graphene_django import DjangoObjectType
@@ -17,10 +16,29 @@ class CustomerType(DjangoObjectType):
 class ProductType(DjangoObjectType):
     class Meta:
         model = Product
+        fields = ("id", "name", "stock")
 
 class OrderType(DjangoObjectType):
     class Meta:
         model = Order
+
+class CustomerNode(DjangoObjectType):
+    class Meta:
+        model = Customer
+        filterset_class = CustomerFilter
+        interfaces = (graphene.relay.Node,)
+
+class ProductNode(DjangoObjectType):
+    class Meta:
+        model = Product
+        filterset_class = ProductFilter
+        interfaces = (graphene.relay.Node,)
+
+class OrderNode(DjangoObjectType):
+    class Meta:
+        model = Order
+        filterset_class = OrderFilter
+        interfaces = (graphene.relay.Node,)
 
 # ---------------- Helper Functions ----------------
 def is_valid_phone(phone):
@@ -132,46 +150,23 @@ class CreateOrder(graphene.Mutation):
         order.products.set(products)
         return CreateOrder(order=order)
 
-# ---------------- Queries ----------------
-class Query(graphene.ObjectType):
-    customers = graphene.List(CustomerType)
-    products = graphene.List(ProductType)
-    orders = graphene.List(OrderType)
+class UpdateLowStockProducts(graphene.Mutation):
+    updated_products = graphene.List(ProductType)
+    message = graphene.String()
 
-    def resolve_customers(self, info):
-        return Customer.objects.all()
+    @classmethod
+    def mutate(cls, root, info):
+        low_stock_products = Product.objects.filter(stock__lt=10)
+        for product in low_stock_products:
+            product.stock += 10
+            product.save()
 
-    def resolve_products(self, info):
-        return Product.objects.all()
+        return UpdateLowStockProducts(
+            updated_products=low_stock_products,
+            message=f"Restocked {low_stock_products.count()} products."
+        )
 
-    def resolve_orders(self, info):
-        return Order.objects.all()
-
-# ---------------- Root Mutation ----------------
-class Mutation(graphene.ObjectType):
-    create_customer = CreateCustomer.Field()
-    bulk_create_customers = BulkCreateCustomers.Field()
-    create_product = CreateProduct.Field()
-    create_order = CreateOrder.Field()
-
-class CustomerNode(DjangoObjectType):
-    class Meta:
-        model = Customer
-        filterset_class = CustomerFilter
-        interfaces = (graphene.relay.Node,)
-
-class ProductNode(DjangoObjectType):
-    class Meta:
-        model = Product
-        filterset_class = ProductFilter
-        interfaces = (graphene.relay.Node,)
-
-class OrderNode(DjangoObjectType):
-    class Meta:
-        model = Order
-        filterset_class = OrderFilter
-        interfaces = (graphene.relay.Node,)
-
+# ---------------- Root Query ----------------
 class Query(graphene.ObjectType):
     all_customers = DjangoFilterConnectionField(CustomerNode, order_by=graphene.List(of_type=graphene.String))
     all_products = DjangoFilterConnectionField(ProductNode, order_by=graphene.List(of_type=graphene.String))
@@ -192,26 +187,10 @@ class Query(graphene.ObjectType):
         qs = Order.objects.all()
         return qs.order_by(*order_by) if order_by else qs
 
-class ProductType(DjangoObjectType):
-    class Meta:
-        model = Product
-        fields = ("id", "name", "stock")
-
-class UpdateLowStockProducts(graphene.Mutation):
-    updated_products = graphene.List(ProductType)
-    message = graphene.String()
-
-    @classmethod
-    def mutate(cls, root, info):
-        low_stock_products = Product.objects.filter(stock__lt=10)
-        for product in low_stock_products:
-            product.stock += 10
-            product.save()
-
-        return UpdateLowStockProducts(
-            updated_products=low_stock_products,
-            message=f"Restocked {low_stock_products.count()} products."
-        )
-
+# ---------------- Root Mutation ----------------
 class Mutation(graphene.ObjectType):
+    create_customer = CreateCustomer.Field()
+    bulk_create_customers = BulkCreateCustomers.Field()
+    create_product = CreateProduct.Field()
+    create_order = CreateOrder.Field()
     updateLowStockProducts = UpdateLowStockProducts.Field()
