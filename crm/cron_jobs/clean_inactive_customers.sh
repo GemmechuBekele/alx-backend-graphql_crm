@@ -1,12 +1,11 @@
 #!/bin/bash
 
-# Activate virtual environment if needed (uncomment and modify below if applicable)
-# source /path/to/venv/bin/activate
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR/../.." || {
+    echo "Failed to change directory to project root"
+    exit 1
+}
 
-# Navigate to project directory
-cd "$(dirname "$0")"/../.. || exit 1
-
-# Run Django command to delete inactive customers and capture output
 deleted_count=$(python3 manage.py shell -c "
 import datetime
 from crm.models import Customer
@@ -19,5 +18,8 @@ inactive_customers.delete()
 print(count)
 ")
 
-# Log the result with timestamp
-echo \"[$(date)] Deleted $deleted_count inactive customers\" >> /tmp/customer_cleanup_log.txt
+if [ $? -eq 0 ]; then
+    echo \"[$(date)] Deleted $deleted_count inactive customers\" >> /tmp/customer_cleanup_log.txt
+else
+    echo \"[$(date)] Error running cleanup\" >> /tmp/customer_cleanup_log.txt
+fi
