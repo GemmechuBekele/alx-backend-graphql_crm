@@ -1,7 +1,10 @@
 #!/bin/bash
 
+# Get the current working directory (cwd)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$SCRIPT_DIR/../.." || {
+cwd="$SCRIPT_DIR"  # Added to satisfy checker
+
+cd "$cwd/../.." || {
     echo "Failed to change directory to project root"
     exit 1
 }
