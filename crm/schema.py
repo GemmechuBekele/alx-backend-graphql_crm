@@ -16,7 +16,7 @@ class CustomerType(DjangoObjectType):
 class ProductType(DjangoObjectType):
     class Meta:
         model = Product
-        fields = ("id", "name", "stock")
+        fields = ("id", "name", "stock")  # Required for updateLowStockProducts mutation
 
 class OrderType(DjangoObjectType):
     class Meta:
@@ -40,7 +40,7 @@ class OrderNode(DjangoObjectType):
         filterset_class = OrderFilter
         interfaces = (graphene.relay.Node,)
 
-# ---------------- Helper Functions ----------------
+# ---------------- Helper Function ----------------
 def is_valid_phone(phone):
     pattern = r'^(\+\d{10,15}|\d{3}-\d{3}-\d{4})$'
     return re.match(pattern, phone)
